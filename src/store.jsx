@@ -120,15 +120,19 @@ export function StoreProvider({ children }) {
     return lastCollection
   }
 
-  const depositCashBag = () => {
+  // Nộp túi tiền mặt bằng QR. entryIds = null → nộp tất cả; hoặc mảng id các mục được chọn → nộp một phần.
+  const depositCashBag = (entryIds = null) => {
     const time = nowStr()
     let seq = state.receiptSeq
     const newReceipts = []
-    const allIds = state.cashBag.flatMap((e) => e.receivableIds)
+    const selected = entryIds ? state.cashBag.filter((e) => entryIds.includes(e.id)) : state.cashBag
+    const keep = entryIds ? state.cashBag.filter((e) => !entryIds.includes(e.id)) : []
+    if (!selected.length) return null
+    const targetIds = selected.flatMap((e) => e.receivableIds)
     const payerByRec = {}
-    state.cashBag.forEach((e) => e.receivableIds.forEach((id) => { payerByRec[id] = e.payer || null }))
+    selected.forEach((e) => e.receivableIds.forEach((id) => { payerByRec[id] = e.payer || null }))
     const receivables = state.receivables.map((r) => {
-      if (!allIds.includes(r.id)) return r
+      if (!targetIds.includes(r.id)) return r
       const remaining = r.amountDue - r.amountPaid
       const rid = `BL-${String(++seq).padStart(6, '0')}`
       newReceipts.push({
@@ -138,9 +142,9 @@ export function StoreProvider({ children }) {
       })
       return { ...r, amountPaid: r.amountDue, status: 'paid_transfer', paidAt: time, paidRef: rid }
     })
-    const total = state.cashBag.reduce((s, e) => s + e.amount, 0)
-    const log = { time, total, entries: state.cashBag, receiptIds: newReceipts.map((x) => x.id) }
-    persist({ ...state, receivables, receipts: [...newReceipts, ...state.receipts], receiptSeq: seq, cashBag: [], depositedLog: [log, ...state.depositedLog],
+    const total = selected.reduce((s, e) => s + e.amount, 0)
+    const log = { time, total, count: selected.length, entries: selected, receiptIds: newReceipts.map((x) => x.id) }
+    persist({ ...state, receivables, receipts: [...newReceipts, ...state.receipts], receiptSeq: seq, cashBag: keep, depositedLog: [log, ...state.depositedLog],
       ...logAction(state, `Nộp túi tiền mặt ${total.toLocaleString('vi-VN')}đ — phát hành ${newReceipts.length} biên lai`) })
     return log
   }

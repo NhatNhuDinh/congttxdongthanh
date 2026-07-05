@@ -306,8 +306,11 @@ table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: 
 .mtop-title { flex: 1; text-align: center; font-weight: 700; font-size: 1rem; color: #10233f; }
 .mbody { flex: 1; overflow-y: auto; padding: 14px 14px 90px; }
 .mbottom { position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); background: #fff; border-top: 1px solid #eef1f6; padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0)); }
-.mbottom button { border: none; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 600; color: #9aa4b6; cursor: pointer; padding: 4px 0; }
+.mbottom.mbottom5 { grid-template-columns: repeat(5, 1fr); }
+.mbottom button { border: none; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 0.66rem; font-weight: 600; color: #9aa4b6; cursor: pointer; padding: 4px 0; }
 .mbottom button.on { color: var(--lumo-primary); }
+.mtab-ic { position: relative; display: grid; place-items: center; }
+.mtab-badge { position: absolute; top: -6px; left: 12px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 9px; background: #d0342c; color: #fff; font-size: 0.6rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
 
 /* cards & bits */
 .mcard { background: #fff; border-radius: 14px; box-shadow: 0 1px 3px rgba(16,35,63,.06); padding: 14px; margin-bottom: 12px; }
@@ -375,6 +378,37 @@ table.grid td.num, table.grid th.num { text-align: right; font-variant-numeric: 
 .minfo svg { flex-shrink: 0; margin-top: 1px; color: #b7791f; }
 .minfo b { color: #6b4d0f; }
 .mst.amber { color: #b7791f; } b.amber { color: #b7791f; }
+
+/* Trang chủ — CTA tiền mặt chờ nộp */
+.mcashcta { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; border: 1px solid #f2d98a; background: #fffdf3; cursor: pointer; }
+.mcashcta-ic { width: 34px; height: 34px; border-radius: 9px; background: #fdeecb; color: #b7791f; display: grid; place-items: center; flex-shrink: 0; }
+.mcashcta-mid { flex: 1; display: flex; flex-direction: column; }
+.mcashcta-t { font-weight: 700; font-size: 0.9rem; color: #10233f; }
+.mcashcta-s { font-size: 0.74rem; color: #8a7a4a; margin-top: 1px; }
+.mcashcta-r { display: flex; align-items: center; gap: 4px; color: #b7791f; } .mcashcta-r b { font-size: 0.95rem; }
+
+/* Màn Chờ nộp — túi tiền mặt */
+.mcb-head { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #a9720f, #d69426); color: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.mcb-head-k { font-size: 0.72rem; opacity: .9; } .mcb-head-v { font-size: 1.5rem; font-weight: 800; margin-top: 2px; }
+.mcb-head-c { background: rgba(255,255,255,.22); padding: 4px 11px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+.mcb-selbar { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; }
+.mcb-check { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 600; color: #4a5568; cursor: pointer; }
+.mcb-check input { width: 18px; height: 18px; accent-color: var(--lumo-primary); }
+.mcb-selinfo { font-size: 0.78rem; color: #8a94a6; } .mcb-selinfo b { color: var(--lumo-primary); }
+.mcb-row { display: flex; align-items: center; gap: 11px; background: #fff; border: 1px solid #eef1f6; border-radius: 12px; padding: 12px; margin-bottom: 9px; cursor: pointer; }
+.mcb-row.on { border-color: var(--lumo-primary); background: #f5f9ff; }
+.mcb-row input { width: 19px; height: 19px; accent-color: var(--lumo-primary); flex-shrink: 0; }
+.mcb-mid { flex: 1; min-width: 0; }
+.mcb-name { font-weight: 700; font-size: 0.92rem; color: #10233f; }
+.mcb-sub { font-size: 0.74rem; color: #8a94a6; margin-top: 2px; }
+.mcb-note { font-size: 0.74rem; color: #8a7a4a; margin-top: 2px; }
+.mcb-amt { font-weight: 800; color: #b7791f; font-size: 0.95rem; flex-shrink: 0; }
+.mcb-foot { position: sticky; bottom: 0; background: #fff; padding: 10px 0 2px; margin-top: 4px; }
+.mcb-foot-l { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 9px; font-size: 0.86rem; color: #6b7688; } .mcb-foot-l b { font-size: 1.15rem; font-weight: 800; color: #10233f; }
+.mcb-empty { text-align: center; padding: 40px 20px 24px; }
+.mcb-empty-ic { width: 60px; height: 60px; border-radius: 50%; background: #e6f4ea; color: #1a7f37; display: grid; place-items: center; margin: 0 auto 14px; }
+.mcb-empty-t { font-weight: 700; font-size: 1rem; color: #10233f; }
+.mcb-empty-s { font-size: 0.82rem; color: #8a94a6; margin-top: 6px; line-height: 1.5; }
 
 /* radios / fields */
 .mradio { display: flex; align-items: flex-start; gap: 11px; padding: 12px 14px; border-bottom: 1px solid #f1f3f8; cursor: pointer; }

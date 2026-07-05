@@ -27,12 +27,14 @@ const addrShort = (hh) => hh.address.split(',')[0]
 const TABS = [
   { to: '/', icon: 'home', label: 'Trang chủ' },
   { to: '/list', icon: 'list', label: 'Danh sách' },
+  { to: '/cashbag', icon: 'cash', label: 'Chờ nộp', badge: 'cash' },
   { to: '/report', icon: 'chart', label: 'Báo cáo' },
   { to: '/profile', icon: 'user', label: 'Cá nhân' },
 ]
 function appBarFor(path) {
   if (path === '/') return { title: 'Trang chủ', bell: true }
   if (path === '/list') return { title: 'Danh sách hộ', filter: true }
+  if (path === '/cashbag') return { title: 'Chờ nộp — tiền mặt' }
   if (path === '/report') return { title: 'Báo cáo nhanh' }
   if (path === '/profile') return { title: 'Cá nhân' }
   if (/^\/hh\/[^/]+\/collect/.test(path)) return { title: 'Thu tiền', back: true }
@@ -46,6 +48,8 @@ function appBarFor(path) {
 export default function MobileLayout() {
   const nav = useNavigate()
   const loc = useLocation()
+  const { state } = useStore()
+  const cashCount = state.cashBag?.length || 0
   const ab = appBarFor(loc.pathname)
   const tabActive = (to) => (to === '/' ? loc.pathname === '/' : to === '/list' ? (loc.pathname.startsWith('/list') || loc.pathname.startsWith('/hh') || loc.pathname.startsWith('/receipt')) : loc.pathname.startsWith(to))
   return (
@@ -62,10 +66,13 @@ export default function MobileLayout() {
               : <span className="mtop-ic ghost" />}
         </div>
         <div className="mbody"><Outlet /></div>
-        <nav className="mbottom">
+        <nav className="mbottom mbottom5">
           {TABS.map((t) => (
             <button key={t.to} className={tabActive(t.to) ? 'on' : ''} onClick={() => nav(t.to)}>
-              <Icon name={t.icon} size={20} />
+              <span className="mtab-ic">
+                <Icon name={t.icon} size={20} />
+                {t.badge === 'cash' && cashCount > 0 && <span className="mtab-badge">{cashCount}</span>}
+              </span>
               <span>{t.label}</span>
             </button>
           ))}
@@ -83,6 +90,8 @@ export function MHome() {
   const hhs = assigned(state)
   const c = { total: hhs.length, paid: 0, unpaid: 0, exempt: 0 }
   hhs.forEach((h) => { const s = mstatus(state, h.id); c[s]++ })
+  const bag = state.cashBag || []
+  const bagTotal = bag.reduce((s, e) => s + e.amount, 0)
   return (
     <>
       <div className="mcard mgreet">
@@ -101,6 +110,20 @@ export function MHome() {
           <span className="mdrive-left">Còn {daysLeft()} ngày</span>
         </div>
       </div>
+
+      {bag.length > 0 && (
+        <button className="mcard mcashcta" onClick={() => nav('/cashbag')}>
+          <span className="mcashcta-ic"><Icon name="cash" size={18} /></span>
+          <span className="mcashcta-mid">
+            <span className="mcashcta-t">Tiền mặt chờ nộp</span>
+            <span className="mcashcta-s">{bag.length} hộ · nộp lại bằng QR</span>
+          </span>
+          <span className="mcashcta-r">
+            <b>{fmt(bagTotal)}</b>
+            <Icon name="chevron" size={16} />
+          </span>
+        </button>
+      )}
 
       <div className="msec-title">Tổng quan danh sách</div>
       <div className="mcard mover">
@@ -230,9 +253,9 @@ export function MDetail() {
         <>
           <div className="minfo">
             <Icon name="info" size={16} />
-            <div>Hộ đã đóng <b>tiền mặt</b> — đang <b>chờ nộp</b>. Biên lai phát hành sau khi bạn nộp lại bằng QR (mục “Túi tiền — chờ nộp”).</div>
+            <div>Hộ đã đóng <b>tiền mặt</b> — đang <b>chờ nộp</b>. Biên lai phát hành sau khi bạn nộp lại bằng QR ở tab <b>“Chờ nộp”</b>.</div>
           </div>
-          <button className="mbtn ghost block" onClick={() => nav('/list')}>Quay về danh sách</button>
+          <button className="mbtn primary block" onClick={() => nav('/cashbag')}>Đến tab Chờ nộp</button>
         </>
       ) : st === 'paid' ? (
         <button className="mbtn primary block" onClick={() => { const r = receipts[0]; r ? nav(`/receipt/${r.id}`) : nav('/list') }}>Xem biên lai</button>
@@ -389,6 +412,133 @@ export function MReceipt() {
         <button className="mbtn ghost" onClick={() => toast('Đã tải biên lai (demo)', 'success')}><Icon name="download" size={15} /> Tải về</button>
         <button className="mbtn ghost" onClick={() => toast('Đã gửi Zalo/SMS (demo)', 'success')}><Icon name="share" size={15} /> Chia sẻ</button>
         <button className="mbtn ghost" onClick={() => toast('Đang in máy in Bluetooth (demo)', 'info')}><Icon name="print" size={15} /> In</button>
+      </div>
+    </>
+  )
+}
+
+// ===== 9. Chờ nộp — túi tiền mặt: chọn hộ → nộp 1 thể bằng QR =====
+export function MCashBag() {
+  const { state, depositCashBag, toast } = useStore()
+  const nav = useNavigate()
+  const bag = state.cashBag || []
+  const [sel, setSel] = useState(() => new Set(bag.map((e) => e.id)))
+  const [step, setStep] = useState('list') // list | qr | done
+  const [result, setResult] = useState(null)
+
+  const selEntries = bag.filter((e) => sel.has(e.id))
+  const selTotal = selEntries.reduce((s, e) => s + e.amount, 0)
+  const bagTotal = bag.reduce((s, e) => s + e.amount, 0)
+  const allChecked = bag.length > 0 && sel.size === bag.length
+  const hhName = (id) => state.households.find((h) => h.id === id)?.name || id
+  const hhAddr = (id) => { const h = state.households.find((x) => x.id === id); return h ? addrShort(h) : '' }
+
+  const toggle = (id) => setSel((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleAll = () => setSel(allChecked ? new Set() : new Set(bag.map((e) => e.id)))
+
+  const confirmDeposit = () => {
+    const ids = [...sel]
+    const log = depositCashBag(ids)
+    setResult(log)
+    setStep('done')
+    toast(`Đã nộp ${log?.count || ids.length} hộ — phát hành biên lai`, 'success')
+  }
+
+  // ---- Kết quả nộp ----
+  if (step === 'done') {
+    return (
+      <div className="msuccess">
+        <div className="mtick"><Icon name="check" size={34} /></div>
+        <div className="ms-title">Nộp tiền mặt thành công!</div>
+        <div className="ms-amt">{fmt(result?.total || 0)}</div>
+        <div className="mcard" style={{ width: '100%' }}>
+          <div className="mkv"><span>Số hộ đã nộp</span><b>{result?.count || 0} hộ</b></div>
+          <div className="mkv"><span>Biên lai phát hành</span><b className="green">{result?.receiptIds?.length || 0}</b></div>
+          <div className="mkv"><span>Phương thức</span><b>Chuyển khoản (QR)</b></div>
+          <div className="mkv"><span>Thời gian</span><b>{result?.time}</b></div>
+          <div className="mkv"><span>Còn chờ nộp</span><b className={bag.length ? 'amber' : ''}>{bag.length} hộ</b></div>
+        </div>
+        <button className="mbtn primary block" onClick={() => { if (bag.length) { setSel(new Set(bag.map((e) => e.id))); setStep('list') } else nav('/') }}>
+          {bag.length ? 'Về danh sách chờ nộp' : 'Về trang chủ'}
+        </button>
+      </div>
+    )
+  }
+
+  // ---- Bước quét QR để nộp ----
+  if (step === 'qr') {
+    return (
+      <>
+        <div className="mcard mamt unpaid"><span>Số tiền cần nộp</span><b>{fmt(selTotal)}</b></div>
+        <div className="mnote-inline">{selEntries.length} hộ · nộp gộp một lần cho xã</div>
+        <div className="mcard" style={{ textAlign: 'center' }}>
+          <FakeQR value={`NOP-${state.user?.code}-${selEntries.length}`} />
+          <div className="mnote-inline">Quét mã VietQR để chuyển khoản đúng <b>{fmt(selTotal)}</b> về tài khoản xã. Hệ thống khớp sao kê và phát hành biên lai cho từng hộ.</div>
+        </div>
+        <div className="minfo">
+          <Icon name="info" size={16} />
+          <div>Sau khi chuyển khoản thành công, bấm <b>“Tôi đã chuyển khoản”</b> để hệ thống ghi nhận và phát hành biên lai.</div>
+        </div>
+        <div className="mrow-btns">
+          <button className="mbtn ghost" onClick={() => setStep('list')}>Quay lại</button>
+          <button className="mbtn primary" onClick={confirmDeposit}>Tôi đã chuyển khoản</button>
+        </div>
+      </>
+    )
+  }
+
+  // ---- Danh sách chờ nộp ----
+  if (!bag.length) {
+    return (
+      <>
+        <div className="mcb-empty">
+          <div className="mcb-empty-ic"><Icon name="checkCircle" size={30} /></div>
+          <div className="mcb-empty-t">Không có hộ nào chờ nộp</div>
+          <div className="mcb-empty-s">Tiền mặt thu tại hộ sẽ hiện ở đây để bạn nộp lại bằng QR.</div>
+        </div>
+        <button className="mbtn ghost block" onClick={() => nav('/list')}>Xem danh sách hộ</button>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="mcb-head">
+        <div>
+          <div className="mcb-head-k">Tổng tiền mặt đang giữ</div>
+          <div className="mcb-head-v">{fmt(bagTotal)}</div>
+        </div>
+        <div className="mcb-head-c">{bag.length} hộ</div>
+      </div>
+
+      <div className="mcb-selbar">
+        <label className="mcb-check">
+          <input type="checkbox" checked={allChecked} onChange={toggleAll} />
+          <span>Chọn tất cả</span>
+        </label>
+        <span className="mcb-selinfo">Đã chọn <b>{sel.size}</b></span>
+      </div>
+
+      {bag.map((e) => (
+        <label key={e.id} className={`mcb-row ${sel.has(e.id) ? 'on' : ''}`}>
+          <input type="checkbox" checked={sel.has(e.id)} onChange={() => toggle(e.id)} />
+          <div className="mcb-mid">
+            <div className="mcb-name">{hhName(e.householdId)}</div>
+            <div className="mcb-sub">{hhAddr(e.householdId)} · {e.collectedAt}</div>
+            {e.note && <div className="mcb-note">Ghi chú: {e.note}</div>}
+          </div>
+          <div className="mcb-amt">{fmt(e.amount)}</div>
+        </label>
+      ))}
+
+      <div className="mcb-foot">
+        <div className="mcb-foot-l">
+          <span>Nộp {sel.size} hộ đã chọn</span>
+          <b>{fmt(selTotal)}</b>
+        </div>
+        <button className="mbtn primary block" disabled={!sel.size} onClick={() => setStep('qr')}>
+          Nộp bằng QR
+        </button>
       </div>
     </>
   )

@@ -13,7 +13,7 @@ import CadreDebts2 from './views/cadre/Debts'
 import { CadreCollect, CadreCollectDetail } from './views/cadre/Collect'
 
 // NGƯỜI THU HỘ (NTH) — app mobile
-import MobileLayout, { MHome, MList, MDetail, MCollect, MSuccess, MReceipt, MReport, MNote, MProfile } from './views/Mobile'
+import MobileLayout, { MHome, MList, MDetail, MCollect, MSuccess, MReceipt, MCashBag, MReport, MNote, MProfile } from './views/Mobile'
 
 // QUẢN TRỊ (QT)
 import { AdminOverview, AdminUsers, AdminAreas, AdminPricing, AdminIntegrations, AdminAudit } from './views/Admin'
@@ -27,7 +27,7 @@ import { LeaderDashboard, LeaderAssignments, LeaderApprovals, LeaderBatches, Lea
 const NTH_ROUTES = [
   ['/', <MHome />], ['/list', <MList />], ['/hh/:id', <MDetail />], ['/hh/:id/collect', <MCollect />],
   ['/hh/:id/success', <MSuccess />], ['/hh/:id/note', <MNote />], ['/receipt/:id', <MReceipt />],
-  ['/report', <MReport />], ['/profile', <MProfile />],
+  ['/cashbag', <MCashBag />], ['/report', <MReport />], ['/profile', <MProfile />],
 ]
 const DESKTOP_ROUTES = {
   QT: [['/', <AdminOverview />], ['/users', <AdminUsers />], ['/areas', <AdminAreas />], ['/pricing', <AdminPricing />], ['/integrations', <AdminIntegrations />], ['/audit', <AdminAudit />]],
