@@ -151,14 +151,33 @@ export function StoreProvider({ children }) {
     persist({ ...state, receivables, ...logAction(state, `In giấy báo vắng nhà cho hộ ${householdId}`) })
   }
 
-  // ==== APP MOBILE (đơn giản) ====
-  // Thu tiền: phát hành biên lai NGAY cho mọi phương thức (theo mockup mobile)
-  // method: 'cash' | 'transfer' | 'transferred'
-  const mobileCollect = (householdId, { method, note, received } = {}) => {
+  // ==== APP MOBILE ====
+  // method: 'cash' (đóng tiền mặt — chờ nộp) | 'transfer' (khách quét QR chuyển khoản cho xã)
+  const mobileCollect = (householdId, { method, note } = {}) => {
     const time = nowStr()
+
+    // TIỀN MẶT: không phát hành biên lai ngay. Hộ đã đưa đủ tiền → ghi nhận "đã thu tiền mặt — chờ nộp"
+    // và cho vào túi tiền. Cuối ngày / hết hạn đợt thu, người thu hộ tự nộp lại bằng QR (depositCashBag)
+    // vì hệ thống chỉ nhận tiền qua chuyển khoản. Biên lai phát hành khi nộp.
+    if (method === 'cash') {
+      const ids = []
+      let amount = 0
+      const receivables = state.receivables.map((r) => {
+        const open = r.householdId === householdId && !CLOSED_STATUSES.includes(r.status)
+        if (!open) return r
+        ids.push(r.id); amount += r.amountDue - r.amountPaid
+        return { ...r, status: 'cash_wait', cashAt: time, note: note || null }
+      })
+      const entry = { id: `TM-${String(state.cashSeq + 1).padStart(4, '0')}`, householdId, receivableIds: ids, amount, collectedAt: time, deadline: CASH_DEADLINE, note: note || null, payer: state.user?.name }
+      const lastCollection = { householdId, type: 'cash_wait', receiptIds: [], amount, time, method: 'cash', note: note || null, deadline: CASH_DEADLINE }
+      persist({ ...state, receivables, cashBag: [...state.cashBag, entry], cashSeq: state.cashSeq + 1, lastCollection,
+        ...logAction(state, `Hộ ${householdId} đóng tiền mặt ${amount.toLocaleString('vi-VN')}đ — chờ nộp`) })
+      return lastCollection
+    }
+
+    // CHUYỂN KHOẢN: khách quét QR chuyển thẳng cho xã → hệ thống khớp mã, phát hành biên lai ngay.
     let seq = state.receiptSeq
     const newReceipts = []
-    const status = method === 'cash' ? 'paid_transfer' : 'paid_qr'
     let amount = 0
     const receivables = state.receivables.map((r) => {
       const open = r.householdId === householdId && !CLOSED_STATUSES.includes(r.status)
@@ -168,15 +187,15 @@ export function StoreProvider({ children }) {
       const rid = `BL-${String(++seq).padStart(6, '0')}`
       newReceipts.push({
         id: rid, receivableId: r.id, householdId, amount: remaining,
-        method: method === 'cash' ? 'transfer_deposit' : 'qr_self', note: note || null,
+        method: 'qr_self', note: note || null,
         collectedBy: `${state.user?.code} — ${state.user?.name}`,
         time, einvoice: `HĐĐT 1C26TDT-${String(seq).padStart(8, '0')}`,
       })
-      return { ...r, amountPaid: r.amountDue, status, paidAt: time, paidRef: rid, payMethod: method }
+      return { ...r, amountPaid: r.amountDue, status: 'paid_qr', paidAt: time, paidRef: rid, payMethod: 'transfer' }
     })
-    const lastCollection = { householdId, receiptIds: newReceipts.map((x) => x.id), amount, time, method, received: received || null, note: note || null }
+    const lastCollection = { householdId, type: 'receipt', receiptIds: newReceipts.map((x) => x.id), amount, time, method: 'transfer', note: note || null }
     persist({ ...state, receivables, receipts: [...newReceipts, ...state.receipts], receiptSeq: seq, lastCollection,
-      ...logAction(state, `Thu tiền hộ ${householdId} — ${amount.toLocaleString('vi-VN')}đ (${method})`) })
+      ...logAction(state, `Thu tiền hộ ${householdId} — ${amount.toLocaleString('vi-VN')}đ (chuyển khoản QR)`) })
     return lastCollection
   }
 

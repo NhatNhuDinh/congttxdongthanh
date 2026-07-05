@@ -185,6 +185,7 @@ export function MDetail() {
   const st = mstatus(state, id)
   const amt = amountOf(state, id)
   const receipts = state.receipts.filter((r) => r.householdId === id)
+  const isCashWait = st === 'paid' && recsOf(state, id).some((r) => r.status === 'cash_wait')
 
   return (
     <>
@@ -225,6 +226,14 @@ export function MDetail() {
           <button className="mbtn ghost" onClick={() => nav(`/hh/${id}/note`)}>Ghi chú</button>
           <button className="mbtn primary" onClick={() => nav(`/hh/${id}/collect`)}>Thu tiền</button>
         </div>
+      ) : isCashWait ? (
+        <>
+          <div className="minfo">
+            <Icon name="info" size={16} />
+            <div>Hộ đã đóng <b>tiền mặt</b> — đang <b>chờ nộp</b>. Biên lai phát hành sau khi bạn nộp lại bằng QR (mục “Túi tiền — chờ nộp”).</div>
+          </div>
+          <button className="mbtn ghost block" onClick={() => nav('/list')}>Quay về danh sách</button>
+        </>
       ) : st === 'paid' ? (
         <button className="mbtn primary block" onClick={() => { const r = receipts[0]; r ? nav(`/receipt/${r.id}`) : nav('/list') }}>Xem biên lai</button>
       ) : (
@@ -234,7 +243,7 @@ export function MDetail() {
   )
 }
 
-// ===== 5–6. Thu tiền: chọn phương thức + nhập tiền =====
+// ===== 5–6. Thu tiền: chọn phương thức (tiền mặt chờ nộp / chuyển khoản QR) =====
 export function MCollect() {
   const { id } = useParams()
   const nav = useNavigate()
@@ -242,62 +251,46 @@ export function MCollect() {
   const hh = state.households.find((h) => h.id === id)
   const amt = amountOf(state, id)
   const [method, setMethod] = useState('cash')
-  const [received, setReceived] = useState('')
-  const [refNo, setRefNo] = useState('')
   const [note, setNote] = useState('')
   if (!hh) return <div className="mempty">Không tìm thấy hộ.</div>
 
-  const recv = Number(received.replace(/\D/g, '')) || 0
-  const change = method === 'cash' && recv >= amt ? recv - amt : 0
-  const canSubmit = method !== 'cash' ? (method !== 'transferred' || refNo.trim()) : recv >= amt
-
   const submit = () => {
-    mobileCollect(id, { method, note, received: method === 'cash' ? recv : null })
-    toast('Thu tiền thành công — đã phát hành biên lai', 'success')
+    mobileCollect(id, { method, note })
+    if (method === 'cash') toast('Đã ghi nhận thu tiền mặt — chờ nộp', 'success')
+    else toast('Thu tiền thành công — đã phát hành biên lai', 'success')
     nav(`/hh/${id}/success`)
   }
 
   return (
     <>
       <div className="mkv2"><span>Hộ:</span><b>{hh.name} ({shortNo(hh.id)})</b></div>
-      <div className={`mcard mamt ${'unpaid'}`}><span>Số tiền phải thu</span><b>{fmt(amt)}</b></div>
+      <div className="mcard mamt unpaid"><span>Số tiền phải thu</span><b>{fmt(amt)}</b></div>
 
       <div className="msec-title">Chọn phương thức thu</div>
       <div className="mcard mpad0">
         <label className={`mradio ${method === 'cash' ? 'on' : ''}`}>
           <input type="radio" checked={method === 'cash'} onChange={() => setMethod('cash')} />
-          <div><b>Tiền mặt</b></div>
+          <div><b>Tiền mặt</b><small>Hộ đưa tiền mặt — ghi nhận “chờ nộp”, cuối ngày nộp lại bằng QR</small></div>
         </label>
         <label className={`mradio ${method === 'transfer' ? 'on' : ''}`}>
           <input type="radio" checked={method === 'transfer'} onChange={() => setMethod('transfer')} />
-          <div><b>Chuyển khoản</b><small>Khách quét QR chuyển khoản cho xã</small></div>
-        </label>
-        <label className={`mradio ${method === 'transferred' ? 'on' : ''}`}>
-          <input type="radio" checked={method === 'transferred'} onChange={() => setMethod('transferred')} />
-          <div><b>Đã chuyển khoản</b><small>Nhập mã giao dịch / số tham chiếu</small></div>
+          <div><b>Chuyển khoản</b><small>Khách quét QR chuyển khoản thẳng cho xã</small></div>
         </label>
       </div>
 
-      {method === 'cash' && (
-        <>
-          <div className="mfield">
-            <label>Số tiền nhận</label>
-            <input inputMode="numeric" placeholder="Nhập số tiền khách đưa" value={received}
-              onChange={(e) => setReceived(e.target.value)} />
+      {method === 'cash' ? (
+        <div className="minfo">
+          <Icon name="info" size={16} />
+          <div>
+            Không cần nhập số tiền — chỉ xác nhận hộ đã đóng đủ <b>{fmt(amt)}</b> tiền mặt.
+            Trạng thái sẽ là <b>“Đã thu tiền mặt — chờ nộp”</b>. Cuối ngày (hoặc hết hạn đợt thu),
+            bạn nộp lại bằng QR cho các hộ đã đóng tiền mặt — hệ thống chỉ nhận tiền qua chuyển khoản.
           </div>
-          <div className="mkv2"><span>Tiền thừa trả lại</span><b className="green">{fmt(change)}</b></div>
-        </>
-      )}
-      {method === 'transfer' && (
+        </div>
+      ) : (
         <div className="mcard" style={{ textAlign: 'center' }}>
           <FakeQR value={id} />
-          <div className="mnote-inline">Đưa mã QR để khách quét chuyển khoản đúng số tiền &amp; mã.</div>
-        </div>
-      )}
-      {method === 'transferred' && (
-        <div className="mfield">
-          <label>Mã giao dịch / Số tham chiếu</label>
-          <input placeholder="VD: FT26xxxxxx" value={refNo} onChange={(e) => setRefNo(e.target.value)} />
+          <div className="mnote-inline">Đưa mã QR để khách quét chuyển khoản đúng số tiền &amp; mã. Biên lai phát hành ngay khi khớp.</div>
         </div>
       )}
 
@@ -306,7 +299,9 @@ export function MCollect() {
         <textarea placeholder="Nhập ghi chú…" value={note} onChange={(e) => setNote(e.target.value)} />
       </div>
 
-      <button className="mbtn primary block" disabled={!canSubmit} onClick={submit}>Xác nhận thu</button>
+      <button className="mbtn primary block" onClick={submit}>
+        {method === 'cash' ? 'Xác nhận đã thu tiền mặt' : 'Xác nhận thu'}
+      </button>
     </>
   )
 }
@@ -318,7 +313,32 @@ export function MSuccess() {
   const { state } = useStore()
   const hh = state.households.find((h) => h.id === id)
   const last = state.lastCollection?.householdId === id ? state.lastCollection : null
-  const methodLabel = { cash: 'Tiền mặt', transfer: 'Chuyển khoản', transferred: 'Đã chuyển khoản' }
+  const isCash = last?.type === 'cash_wait' || last?.method === 'cash'
+
+  if (isCash) {
+    return (
+      <div className="msuccess">
+        <div className="mtick amber"><Icon name="cash" size={32} /></div>
+        <div className="ms-title">Đã thu tiền mặt — chờ nộp</div>
+        <div className="ms-amt">{fmt(last?.amount || amountOf(state, id))}</div>
+        <div className="mcard" style={{ width: '100%' }}>
+          <div className="mkv"><span>Hộ</span><b>{hh?.name} ({shortNo(id)})</b></div>
+          <div className="mkv"><span>Kỳ thu</span><b>{DRIVE.name}</b></div>
+          <div className="mkv"><span>Phương thức</span><b>Tiền mặt</b></div>
+          <div className="mkv"><span>Trạng thái</span><b className="amber">Chờ nộp bằng QR</b></div>
+          <div className="mkv"><span>Người thu</span><b>{state.user?.name}</b></div>
+          <div className="mkv"><span>Thời gian</span><b>{last?.time}</b></div>
+          <div className="mkv"><span>Ghi chú</span><b>{last?.note || '–'}</b></div>
+        </div>
+        <div className="minfo" style={{ width: '100%' }}>
+          <Icon name="info" size={16} />
+          <div>Biên lai sẽ phát hành sau khi bạn nộp tiền mặt bằng QR (cuối ngày / hết hạn đợt thu) — hệ thống chỉ nhận tiền qua chuyển khoản.</div>
+        </div>
+        <button className="mbtn primary block" onClick={() => nav('/list')}>Quay về danh sách</button>
+      </div>
+    )
+  }
+
   return (
     <div className="msuccess">
       <div className="mtick"><Icon name="check" size={34} /></div>
@@ -327,7 +347,7 @@ export function MSuccess() {
       <div className="mcard" style={{ width: '100%' }}>
         <div className="mkv"><span>Hộ</span><b>{hh?.name} ({shortNo(id)})</b></div>
         <div className="mkv"><span>Kỳ thu</span><b>{DRIVE.name}</b></div>
-        <div className="mkv"><span>Phương thức</span><b>{methodLabel[last?.method] || 'Tiền mặt'}</b></div>
+        <div className="mkv"><span>Phương thức</span><b>Chuyển khoản</b></div>
         <div className="mkv"><span>Người thu</span><b>{state.user?.name}</b></div>
         <div className="mkv"><span>Thời gian</span><b>{last?.time}</b></div>
         <div className="mkv"><span>Ghi chú</span><b>{last?.note || '–'}</b></div>
