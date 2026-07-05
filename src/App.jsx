@@ -3,6 +3,14 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store'
 import Layout from './components/Layout'
 import Login from './views/Login'
+// ---- Vai CÁN BỘ XÃ (khung + 6 màn, standalone dưới /cadre) ----
+import { CadreShell } from './views/cadre/shell'
+import CadreOverview2 from './views/cadre/Overview'
+import { CadreObjects, CadreObjectDetail } from './views/cadre/Objects'
+import CadreInvoices2 from './views/cadre/Invoices'
+import CadreRoutesView from './views/cadre/RoutesView'
+import CadreDebts2 from './views/cadre/Debts'
+import { CadreCollect, CadreCollectDetail } from './views/cadre/Collect'
 
 // NGƯỜI THU HỘ (NTH)
 import Dashboard from './views/Dashboard'
@@ -51,6 +59,17 @@ export default function App() {
   if (!state.user) {
     return (
       <Routes>
+        {/* Vai Cán bộ xã — xem trực tiếp không cần đăng nhập */}
+        <Route path="/cadre" element={<CadreShell />}>
+          <Route index element={<CadreOverview2 />} />
+          <Route path="objects" element={<CadreObjects />} />
+          <Route path="objects/:id" element={<CadreObjectDetail />} />
+          <Route path="invoices" element={<CadreInvoices2 />} />
+          <Route path="routes" element={<CadreRoutesView />} />
+          <Route path="debts" element={<CadreDebts2 />} />
+          <Route path="collect" element={<CadreCollect />} />
+          <Route path="collect/:id" element={<CadreCollectDetail />} />
+        </Route>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -61,6 +80,17 @@ export default function App() {
 
   return (
     <Routes>
+      {/* Vai Cán bộ xã — xem trực tiếp */}
+      <Route path="/cadre" element={<CadreShell />}>
+        <Route index element={<CadreOverview2 />} />
+        <Route path="objects" element={<CadreObjects />} />
+        <Route path="objects/:id" element={<CadreObjectDetail />} />
+        <Route path="invoices" element={<CadreInvoices2 />} />
+        <Route path="routes" element={<CadreRoutesView />} />
+        <Route path="debts" element={<CadreDebts2 />} />
+        <Route path="collect" element={<CadreCollect />} />
+        <Route path="collect/:id" element={<CadreCollectDetail />} />
+      </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route element={<Layout />}>
         {routes.map(([path, el]) => <Route key={path} path={path} element={el} />)}
