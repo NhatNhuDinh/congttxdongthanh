@@ -26,10 +26,13 @@ kết nối VietQR/HĐĐT/KBNN (QT-06), nhật ký & audit trail (QT-09).
 Tra cứu hộ toàn xã (DM-07), chống trùng khi hợp nhất 3 xã (DM-04), sinh khoản theo đợt (HD-01/02),
 tạo khoản thu lẻ (HD-03), lập đề nghị miễn giảm trình lãnh đạo (CN-04), theo dõi công nợ (CN-01/03).
 
-### Người thu hộ (NTH) — *đi thu tại hộ theo tuyến được phân công*
-Danh sách đi thu phân 3 nhóm **Chưa thu / Đã đóng / Chờ nộp**, màn hình thu khóa trường + che CCCD/SĐT (TH-02),
-dân quét QR tại chỗ (TH-04), hộ đóng tiền mặt → **túi tiền, nộp cuối ngày** kiểu ví COD shipper (TH-06),
-chặn thu trùng (TH-11), giấy báo vắng nhà (TH-12), người đóng thay (TH-13), in/gửi biên lai (TH-10).
+### Người thu hộ (NTH) — *ứng dụng di động, đơn giản*
+Thiết kế **mobile-first** (khung điện thoại + thanh điều hướng dưới: Trang chủ · Danh sách · Báo cáo · Cá nhân),
+theo đúng mockup 11 màn: Đăng nhập → Trang chủ (đợt thu hiện tại, còn X ngày, tổng quan chưa/đã/miễn thu) →
+Danh sách hộ (tab Tất cả/Chưa thu/Đã thu, phân trang 20/lần) → Chi tiết hộ (thông tin phải thu + lịch sử) →
+Thu tiền (chọn Tiền mặt/Chuyển khoản/Đã chuyển khoản; tiền mặt nhập số nhận + tính tiền thừa) →
+Kết quả thu → Biên lai điện tử (Tải/Chia sẻ/In) → Báo cáo nhanh → Ghi chú (hộ vắng nhà…). Trên desktop hiển thị trong khung điện thoại căn giữa.
+Trang **Cá nhân** ghi rõ quyền: chỉ xem danh sách, ghi nhận thu, xem biên lai, ghi chú — **không sửa số liệu, không xóa giao dịch**.
 
 ### Kế toán (KT) — *khớp sao kê, dòng treo, đối soát, báo cáo*
 Khớp sao kê theo mã → phát hành biên lai (TH-07/09), xử lý dòng treo gán tay/hoàn/xác minh (TH-08),

@@ -168,7 +168,9 @@ export function AcctLedger() {
         Sổ thu — bảng kê biên lai/HĐĐT đã phát hành (BC-04). Biên lai ký số, <b>không sửa sau phát hành</b>;
         việc hủy/điều chỉnh có kiểm soát thuộc kế toán (TH-09).
       </Banner>
-      <div className="toolbar"><div style={{ flex: 1 }} />
+      <div className="toolbar">
+        <div style={{ fontSize: '0.8rem', color: 'var(--lumo-shade-60)', alignSelf: 'center' }}>Tổng <b>{state.receipts.length}</b> biên lai đã phát hành{state.receipts.length > 150 ? ' · hiển thị 150 mới nhất' : ''}</div>
+        <div style={{ flex: 1 }} />
         <button className="btn neutral" onClick={() => toast('Đã xuất sổ thu ra Excel (demo)', 'success')}><Icon name="doc" /> Xuất Excel</button>
       </div>
       <div className="card" style={{ padding: 0 }}>
@@ -176,7 +178,7 @@ export function AcctLedger() {
           <table className="grid">
             <thead><tr><th>Số biên lai</th><th>HĐĐT</th><th>Hộ</th><th>Hình thức</th><th>Thời điểm</th><th className="num">Số tiền</th></tr></thead>
             <tbody>
-              {state.receipts.map((r) => {
+              {state.receipts.slice(0, 150).map((r) => {
                 const hh = state.households.find((h) => h.id === r.householdId)
                 return (
                   <tr key={r.id}>

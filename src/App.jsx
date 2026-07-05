@@ -4,13 +4,8 @@ import { useStore } from './store'
 import Layout from './components/Layout'
 import Login from './views/Login'
 
-// NGƯỜI THU HỘ (NTH)
-import Dashboard from './views/Dashboard'
-import CollectionList from './views/CollectionList'
-import Collect from './views/Collect'
-import CollectSuccess from './views/CollectSuccess'
-import CashBag from './views/CashBag'
-import { ReceiptList, ReceiptDetail } from './views/Receipts'
+// NGƯỜI THU HỘ (NTH) — app mobile
+import MobileLayout, { MHome, MList, MDetail, MCollect, MSuccess, MReceipt, MReport, MNote, MProfile } from './views/Mobile'
 
 // QUẢN TRỊ (QT)
 import { AdminOverview, AdminUsers, AdminAreas, AdminPricing, AdminIntegrations, AdminAudit } from './views/Admin'
@@ -21,28 +16,16 @@ import { AcctOverview, AcctReconcile, AcctSuspense, AcctCashReconcile, AcctLedge
 // LÃNH ĐẠO (LĐ)
 import { LeaderDashboard, LeaderAssignments, LeaderApprovals, LeaderBatches, LeaderReports } from './views/Leader'
 
-const ROUTES = {
-  NTH: [
-    ['/', <Dashboard />], ['/collect-list', <CollectionList />], ['/collect/:hhId', <Collect />],
-    ['/success/:hhId', <CollectSuccess />], ['/cashbag', <CashBag />],
-    ['/receipts', <ReceiptList />], ['/receipts/:id', <ReceiptDetail />],
-  ],
-  QT: [
-    ['/', <AdminOverview />], ['/users', <AdminUsers />], ['/areas', <AdminAreas />],
-    ['/pricing', <AdminPricing />], ['/integrations', <AdminIntegrations />], ['/audit', <AdminAudit />],
-  ],
-  CB: [
-    ['/', <CadreOverview />], ['/households', <CadreHouseholds />], ['/households/:hhId', <CadreHouseholdDetail />],
-    ['/invoices', <CadreInvoices />], ['/adhoc', <CadreAdhoc />], ['/exemptions', <CadreExemptions />], ['/debts', <CadreDebts />],
-  ],
-  KT: [
-    ['/', <AcctOverview />], ['/reconcile', <AcctReconcile />], ['/suspense', <AcctSuspense />],
-    ['/cash-reconcile', <AcctCashReconcile />], ['/ledger', <AcctLedger />], ['/reports', <AcctReports />],
-  ],
-  LD: [
-    ['/', <LeaderDashboard />], ['/assignments', <LeaderAssignments />], ['/approvals', <LeaderApprovals />],
-    ['/batches', <LeaderBatches />], ['/reports', <LeaderReports />],
-  ],
+const NTH_ROUTES = [
+  ['/', <MHome />], ['/list', <MList />], ['/hh/:id', <MDetail />], ['/hh/:id/collect', <MCollect />],
+  ['/hh/:id/success', <MSuccess />], ['/hh/:id/note', <MNote />], ['/receipt/:id', <MReceipt />],
+  ['/report', <MReport />], ['/profile', <MProfile />],
+]
+const DESKTOP_ROUTES = {
+  QT: [['/', <AdminOverview />], ['/users', <AdminUsers />], ['/areas', <AdminAreas />], ['/pricing', <AdminPricing />], ['/integrations', <AdminIntegrations />], ['/audit', <AdminAudit />]],
+  CB: [['/', <CadreOverview />], ['/households', <CadreHouseholds />], ['/households/:hhId', <CadreHouseholdDetail />], ['/invoices', <CadreInvoices />], ['/adhoc', <CadreAdhoc />], ['/exemptions', <CadreExemptions />], ['/debts', <CadreDebts />]],
+  KT: [['/', <AcctOverview />], ['/reconcile', <AcctReconcile />], ['/suspense', <AcctSuspense />], ['/cash-reconcile', <AcctCashReconcile />], ['/ledger', <AcctLedger />], ['/reports', <AcctReports />]],
+  LD: [['/', <LeaderDashboard />], ['/assignments', <LeaderAssignments />], ['/approvals', <LeaderApprovals />], ['/batches', <LeaderBatches />], ['/reports', <LeaderReports />]],
 }
 
 export default function App() {
@@ -57,12 +40,13 @@ export default function App() {
     )
   }
 
-  const routes = ROUTES[state.user.roleKey] || ROUTES.NTH
+  const isNTH = state.user.roleKey === 'NTH'
+  const routes = isNTH ? NTH_ROUTES : (DESKTOP_ROUTES[state.user.roleKey] || DESKTOP_ROUTES.CB)
 
   return (
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route element={<Layout />}>
+      <Route element={isNTH ? <MobileLayout /> : <Layout />}>
         {routes.map(([path, el]) => <Route key={path} path={path} element={el} />)}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

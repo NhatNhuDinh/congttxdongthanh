@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import {
-  HOUSEHOLDS, RECEIVABLES, RECEIPTS, CASH_BAG, BANK_LINES, EXEMPTIONS, BATCHES, AUDIT_LOG,
-  ROLES, CURRENT_PERIOD, CASH_DEADLINE, PAID_STATUSES, CLOSED_STATUSES,
+  HOUSEHOLDS, RECEIVABLES, RECEIPTS, CASH_BAG, BANK_LINES, EXEMPTIONS, BATCHES, AUDIT_LOG, SEQ,
+  ROLES, CURRENT_PERIOD, CASH_DEADLINE, PAID_STATUSES, CLOSED_STATUSES, overdueDays,
 } from './data'
 
 const KEY = 'dt-multirole-demo-v1'
@@ -18,11 +18,12 @@ function buildInitial() {
     exemptions: EXEMPTIONS,
     batches: BATCHES,
     auditLog: AUDIT_LOG,
-    receiptSeq: 119,
-    cashSeq: 1,
-    adhocSeq: 300,
-    exemptSeq: 21,
-    auditSeq: 6,
+    notes: [],
+    receiptSeq: SEQ.receipt,
+    cashSeq: SEQ.cash,
+    adhocSeq: SEQ.adhoc,
+    exemptSeq: SEQ.exempt,
+    auditSeq: SEQ.audit,
     lastCollection: null,
   }
 }
@@ -150,6 +151,54 @@ export function StoreProvider({ children }) {
     persist({ ...state, receivables, ...logAction(state, `In giấy báo vắng nhà cho hộ ${householdId}`) })
   }
 
+  // ==== APP MOBILE (đơn giản) ====
+  // Thu tiền: phát hành biên lai NGAY cho mọi phương thức (theo mockup mobile)
+  // method: 'cash' | 'transfer' | 'transferred'
+  const mobileCollect = (householdId, { method, note, received } = {}) => {
+    const time = nowStr()
+    let seq = state.receiptSeq
+    const newReceipts = []
+    const status = method === 'cash' ? 'paid_transfer' : 'paid_qr'
+    let amount = 0
+    const receivables = state.receivables.map((r) => {
+      const open = r.householdId === householdId && !CLOSED_STATUSES.includes(r.status)
+      if (!open) return r
+      const remaining = r.amountDue - r.amountPaid
+      amount += remaining
+      const rid = `BL-${String(++seq).padStart(6, '0')}`
+      newReceipts.push({
+        id: rid, receivableId: r.id, householdId, amount: remaining,
+        method: method === 'cash' ? 'transfer_deposit' : 'qr_self', note: note || null,
+        collectedBy: `${state.user?.code} — ${state.user?.name}`,
+        time, einvoice: `HĐĐT 1C26TDT-${String(seq).padStart(8, '0')}`,
+      })
+      return { ...r, amountPaid: r.amountDue, status, paidAt: time, paidRef: rid, payMethod: method }
+    })
+    const lastCollection = { householdId, receiptIds: newReceipts.map((x) => x.id), amount, time, method, received: received || null, note: note || null }
+    persist({ ...state, receivables, receipts: [...newReceipts, ...state.receipts], receiptSeq: seq, lastCollection,
+      ...logAction(state, `Thu tiền hộ ${householdId} — ${amount.toLocaleString('vi-VN')}đ (${method})`) })
+    return lastCollection
+  }
+
+  const addNote = (householdId, { type, content, datetime }) => {
+    const entry = { id: `GC-${state.notes.length + 1}`, householdId, type, content, datetime, by: state.user?.code }
+    // Hộ vắng nhà → đánh dấu absent
+    const receivables = type === 'Hộ vắng nhà'
+      ? state.receivables.map((r) => (r.householdId === householdId && r.status === 'pending' ? { ...r, status: 'absent', noticeLeftAt: datetime } : r))
+      : state.receivables
+    persist({ ...state, notes: [entry, ...state.notes], receivables, ...logAction(state, `Ghi chú hộ ${householdId}: ${type}`) })
+    return entry
+  }
+
+  // Nhắc nợ: gửi lại QR qua Zalo/SMS cho hộ quá hạn (tăng số lần đã gửi)
+  const sendReminder = (householdId) => {
+    const day = nowStr().split(' ')[1]
+    const receivables = state.receivables.map((r) =>
+      r.householdId === householdId && !CLOSED_STATUSES.includes(r.status)
+        ? { ...r, remindersSent: (r.remindersSent || 0) + 1, lastReminderAt: day } : r)
+    persist({ ...state, receivables, ...logAction(state, `Nhắc nợ — gửi lại QR (Zalo/SMS) cho hộ ${householdId}`) })
+  }
+
   // ===== CÁN BỘ XÃ (CB) =====
   const createAdhoc = (householdId) => {
     const hh = state.households.find((h) => h.id === householdId)
@@ -218,7 +267,8 @@ export function StoreProvider({ children }) {
 
   const api = {
     state, login, logout, resetDemo, toast,
-    collectMatched, collectCashHold, depositCashBag, markAbsent,
+    collectMatched, collectCashHold, depositCashBag, markAbsent, sendReminder,
+    mobileCollect, addNote,
     createAdhoc, createExemption,
     matchBankLine, resolveSuspense,
     decideExemption, signBatch,
@@ -247,9 +297,18 @@ export function remainingOf(state, householdId) {
 export function cashBagTotal(state) {
   return state.cashBag.reduce((s, e) => s + e.amount, 0)
 }
+// Thông tin quá hạn của hộ (dựa trên khoản còn mở cũ nhất)
+export function overdueInfoOf(state, householdId) {
+  const open = openReceivablesOf(state, householdId).filter((r) => r.dueISO)
+  if (!open.length) return { days: 0, dueISO: null, reminders: 0 }
+  const oldest = open.reduce((a, b) => (a.dueISO < b.dueISO ? a : b))
+  const reminders = Math.max(...open.map((r) => r.remindersSent || 0))
+  return { days: overdueDays(oldest.dueISO), dueISO: oldest.dueISO, due: oldest.due, reminders }
+}
 export function householdStatus(state, householdId, assignedTo = 'NTH-007') {
   const recs = state.receivables.filter((r) => r.householdId === householdId && r.assignedTo === assignedTo)
   if (!recs.length) return 'pending'
+  if (recs.every((r) => r.status === 'exempt')) return 'exempt'
   if (recs.every((r) => CLOSED_STATUSES.includes(r.status))) {
     if (recs.some((r) => r.status === 'cash_wait')) return 'cash_wait'
     if (recs.some((r) => r.status === 'paid_transfer')) return 'paid_transfer'

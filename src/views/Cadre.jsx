@@ -49,11 +49,13 @@ export function CadreHouseholds() {
       return h.name.toLowerCase().includes(s) || h.id.toLowerCase().includes(s)
         || h.address.toLowerCase().includes(s) || h.cccd.includes(s) || h.phone.replace(/\s/g, '').includes(s.replace(/\s/g, ''))
     })
+  const CAP = 120
+  const shown = rows.slice(0, CAP)
   return (
     <>
       <Banner tone="info" icon="search">
-        Tra cứu <b>toàn bộ hộ trên địa bàn xã</b> (DM-07) theo tên, mã hộ, CCCD, SĐT, địa chỉ. Cán bộ được xem toàn xã;
-        người thu hộ thì chỉ thấy hộ trong tuyến của mình.
+        Tra cứu <b>toàn bộ hộ trên địa bàn xã</b> ({state.households.length} hộ, DM-07) theo tên, mã hộ, CCCD, SĐT, địa chỉ.
+        Cán bộ được xem toàn xã; người thu hộ thì chỉ thấy hộ trong tuyến của mình.
       </Banner>
       <div className="toolbar">
         <div className="search">
@@ -65,7 +67,10 @@ export function CadreHouseholds() {
           {AREAS.map((a) => <button key={a.id} className={area === a.id ? 'on' : ''} onClick={() => setArea(a.id)}>{a.name}</button>)}
         </div>
       </div>
-      {rows.map((hh) => {
+      <div style={{ fontSize: '0.76rem', color: 'var(--lumo-shade-60)', margin: '2px 2px 8px' }}>
+        {rows.length > CAP ? <>Đang hiển thị <b>{CAP}</b> / {rows.length} hộ — thu hẹp tìm kiếm để xem tiếp.</> : <>{rows.length} hộ.</>}
+      </div>
+      {shown.map((hh) => {
         const debt = openDebtOf(state, hh.id)
         const hasAny = state.receivables.some((r) => r.householdId === hh.id)
         return (
@@ -362,7 +367,7 @@ export function CadreDebts() {
           <table className="grid">
             <thead><tr><th>Hộ</th><th>Địa bàn</th><th className="num">Còn nợ</th><th>Ghi chú</th></tr></thead>
             <tbody>
-              {rows.map(({ hh, debt }) => {
+              {rows.slice(0, 120).map(({ hh, debt }) => {
                 const legacy = state.receivables.some((r) => r.householdId === hh.id && r.kind === 'legacy' && !CLOSED_STATUSES.includes(r.status))
                 const partial = state.receivables.some((r) => r.householdId === hh.id && r.status === 'partial')
                 return (
