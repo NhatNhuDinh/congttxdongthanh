@@ -17,7 +17,7 @@ export function CadreCollect() {
   const rows = HH.filter((h) => seg === 'chua' ? true : h.overdue)
   return (
     <>
-      <Topbar title="Thu tiền (hỗ trợ)" />
+      <Topbar title="Thu tiền (hỗ trợ)" period={false} />
       <div className="cb-content">
         <div style={{ marginBottom: 14 }}>
           <div className="cb-seg">
@@ -28,7 +28,7 @@ export function CadreCollect() {
 
         <div className="cb-card pad0">
           {rows.map((h) => (
-            <div key={h.id} className="cb-hh" onClick={() => nav(`/cadre/collect/${h.id}`)}>
+            <div key={h.id} className="cb-hh" onClick={() => nav(`/collect/${h.id}`)}>
               <div className="avatar">{h.name.split(' ').slice(-1)[0][0]}</div>
               <div className="info">
                 <div className="nm">{h.name} {h.overdue && <span className="cb-tag warn" style={{ marginLeft: 4 }}>Quá hạn</span>}</div>
@@ -52,9 +52,9 @@ export function CadreCollectDetail() {
   const [proxy, setProxy] = useState(false)
   return (
     <>
-      <Topbar title="Thu tiền · chi tiết hộ" />
+      <Topbar title="Thu tiền · chi tiết hộ" period={false} />
       <div className="cb-content">
-        <button className="cb-backlink" onClick={() => nav('/cadre/collect')}><Icon name="caret" size={14} />Danh sách đi thu</button>
+        <button className="cb-backlink" onClick={() => nav('/collect')}><Icon name="caret" size={14} />Danh sách đi thu</button>
 
         <div className="cb-detail">
           {/* trái: thông tin KHÓA */}

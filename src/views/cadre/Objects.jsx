@@ -52,7 +52,7 @@ export function CadreObjects() {
               </thead>
               <tbody>
                 {rows.map((o) => (
-                  <tr key={o.id} className="click" onClick={() => nav(`/cadre/objects/${o.id}`)}>
+                  <tr key={o.id} className="click" onClick={() => nav(`/objects/${o.id}`)}>
                     <td className="mono">{o.id}</td>
                     <td style={{ fontWeight: 600 }}>{o.name}</td>
                     <td><span className={`cb-tag ${TYPE_TAG[o.type]}`}>{o.type}</span></td>
@@ -60,7 +60,7 @@ export function CadreObjects() {
                     <td>{o.auto ? <span className="cb-sub">Tự động</span> : <span className="mono">{o.contract}</span>}</td>
                     <td className="num" style={{ fontWeight: 700, color: o.debt ? 'var(--c-warn)' : 'inherit' }}>{fmt(o.debt)}</td>
                     <td className="actions" onClick={(e) => e.stopPropagation()}>
-                      <button className="cb-mini" onClick={() => nav(`/cadre/objects/${o.id}`)}>Xem</button>
+                      <button className="cb-mini" onClick={() => nav(`/objects/${o.id}`)}>Xem</button>
                     </td>
                   </tr>
                 ))}
@@ -217,9 +217,9 @@ export function CadreObjectDetail() {
   const org = !o.auto
   return (
     <>
-      <Topbar title="Chi tiết đối tượng" />
+      <Topbar title="Chi tiết đối tượng" period={false} />
       <div className="cb-content">
-        <button className="cb-backlink" onClick={() => nav('/cadre/objects')}><Icon name="caret" size={14} />Danh sách đối tượng</button>
+        <button className="cb-backlink" onClick={() => nav('/objects')}><Icon name="caret" size={14} />Danh sách đối tượng</button>
 
         <div className="cb-detail">
           <div>

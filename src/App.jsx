@@ -3,8 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store'
 import Layout from './components/Layout'
 import Login from './views/Login'
-// ---- Vai CÁN BỘ XÃ (khung + 6 màn, standalone dưới /cadre) ----
-import { CadreShell } from './views/cadre/shell'
+// ---- Vai CÁN BỘ XÃ (6 màn — mount trong Layout chung tại ROOT) ----
 import CadreOverview2 from './views/cadre/Overview'
 import { CadreObjects, CadreObjectDetail } from './views/cadre/Objects'
 import CadreInvoices2 from './views/cadre/Invoices'
@@ -17,8 +16,6 @@ import MobileLayout, { MHome, MList, MDetail, MCollect, MSuccess, MReceipt, MCas
 
 // QUẢN TRỊ (QT)
 import { AdminOverview, AdminUsers, AdminAreas, AdminPricing, AdminIntegrations, AdminAudit } from './views/Admin'
-// CÁN BỘ XÃ (CB)
-import { CadreOverview, CadreHouseholds, CadreHouseholdDetail, CadreInvoices, CadreAdhoc, CadreExemptions, CadreDebts } from './views/Cadre'
 // KẾ TOÁN (KT)
 import { AcctOverview, AcctReconcile, AcctSuspense, AcctCashReconcile, AcctLedger, AcctReports } from './views/Accountant'
 // LÃNH ĐẠO (LĐ)
@@ -31,7 +28,7 @@ const NTH_ROUTES = [
 ]
 const DESKTOP_ROUTES = {
   QT: [['/', <AdminOverview />], ['/users', <AdminUsers />], ['/areas', <AdminAreas />], ['/pricing', <AdminPricing />], ['/integrations', <AdminIntegrations />], ['/audit', <AdminAudit />]],
-  CB: [['/', <CadreOverview />], ['/households', <CadreHouseholds />], ['/households/:hhId', <CadreHouseholdDetail />], ['/invoices', <CadreInvoices />], ['/adhoc', <CadreAdhoc />], ['/exemptions', <CadreExemptions />], ['/debts', <CadreDebts />]],
+  CB: [['/', <CadreOverview2 />], ['/objects', <CadreObjects />], ['/objects/:id', <CadreObjectDetail />], ['/invoices', <CadreInvoices2 />], ['/routes', <CadreRoutesView />], ['/debts', <CadreDebts2 />], ['/collect', <CadreCollect />], ['/collect/:id', <CadreCollectDetail />]],
   KT: [['/', <AcctOverview />], ['/reconcile', <AcctReconcile />], ['/suspense', <AcctSuspense />], ['/cash-reconcile', <AcctCashReconcile />], ['/ledger', <AcctLedger />], ['/reports', <AcctReports />]],
   LD: [['/', <LeaderDashboard />], ['/assignments', <LeaderAssignments />], ['/approvals', <LeaderApprovals />], ['/batches', <LeaderBatches />], ['/reports', <LeaderReports />]],
 }
@@ -42,17 +39,6 @@ export default function App() {
   if (!state.user) {
     return (
       <Routes>
-        {/* Vai Cán bộ xã — xem trực tiếp không cần đăng nhập */}
-        <Route path="/cadre" element={<CadreShell />}>
-          <Route index element={<CadreOverview2 />} />
-          <Route path="objects" element={<CadreObjects />} />
-          <Route path="objects/:id" element={<CadreObjectDetail />} />
-          <Route path="invoices" element={<CadreInvoices2 />} />
-          <Route path="routes" element={<CadreRoutesView />} />
-          <Route path="debts" element={<CadreDebts2 />} />
-          <Route path="collect" element={<CadreCollect />} />
-          <Route path="collect/:id" element={<CadreCollectDetail />} />
-        </Route>
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -64,17 +50,6 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Vai Cán bộ xã — xem trực tiếp */}
-      <Route path="/cadre" element={<CadreShell />}>
-        <Route index element={<CadreOverview2 />} />
-        <Route path="objects" element={<CadreObjects />} />
-        <Route path="objects/:id" element={<CadreObjectDetail />} />
-        <Route path="invoices" element={<CadreInvoices2 />} />
-        <Route path="routes" element={<CadreRoutesView />} />
-        <Route path="debts" element={<CadreDebts2 />} />
-        <Route path="collect" element={<CadreCollect />} />
-        <Route path="collect/:id" element={<CadreCollectDetail />} />
-      </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route element={isNTH ? <MobileLayout /> : <Layout />}>
         {routes.map(([path, el]) => <Route key={path} path={path} element={el} />)}

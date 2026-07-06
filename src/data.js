@@ -5,10 +5,12 @@
 export const TODAY_ISO = '2026-07-04' // mốc "hôm nay" cố định để số liệu demo ổn định
 
 export const AREAS = [
-  { id: 'DT', name: 'Đông Thạnh' },
-  { id: 'NB', name: 'Nhị Bình' },
-  { id: 'TTT', name: 'Thới Tam Thôn' },
+  { id: 'DT', name: 'Đông Thạnh (cũ)' },
+  { id: 'NB', name: 'Nhị Bình (cũ)' },
+  { id: 'TTT', name: 'Thới Tam Thôn (cũ)' },
 ]
+// Lựa chọn "tất cả" dùng cho dropdown lọc địa bàn (vai Cán bộ xã)
+export const AREA_ALL = { id: 'all', name: 'Tất cả địa bàn' }
 
 // Hai chu kỳ thu — màn Danh sách đi thu cho chọn Tháng / Quý
 export const PERIODS = {
@@ -268,8 +270,8 @@ export const USERS = [
 export const ROLES = {
   QT: { key: 'QT', code: 'QT-01', name: 'Đơn vị triển khai', roleLabel: 'Quản trị hệ thống', tag: 'Quyền kỹ thuật — không duyệt tiền',
     nav: [{ section: 'Quản trị hệ thống' }, { to: '/', icon: 'home', label: 'Tổng quan hệ thống', end: true }, { to: '/users', icon: 'users', label: 'Người dùng & phân quyền' }, { to: '/areas', icon: 'map', label: 'Địa bàn & đơn vị thu' }, { to: '/pricing', icon: 'percent', label: 'Biểu giá theo thời kỳ' }, { to: '/integrations', icon: 'link', label: 'Kết nối tích hợp' }, { to: '/audit', icon: 'doc', label: 'Nhật ký & audit' }] },
-  CB: { key: 'CB', code: 'CB-012', name: 'Nguyễn Thị Kế', roleLabel: 'Cán bộ xã — Phòng Kinh tế', tag: 'Danh mục hộ · hóa đơn · đề nghị miễn giảm',
-    nav: [{ section: 'Nghiệp vụ cán bộ' }, { to: '/', icon: 'home', label: 'Tổng quan', end: true }, { to: '/households', icon: 'search', label: 'Hộ dân (toàn xã)' }, { to: '/invoices', icon: 'doc', label: 'Hóa đơn & đợt thu' }, { to: '/adhoc', icon: 'plus', label: 'Tạo khoản thu lẻ' }, { to: '/exemptions', icon: 'percent', label: 'Đề nghị miễn giảm' }, { to: '/debts', icon: 'list', label: 'Công nợ' }] },
+  CB: { key: 'CB', code: 'CB-012', name: 'Nguyễn Thị Kế', roleLabel: 'Cán bộ xã — Phòng Kinh tế', tag: 'Đối tượng · hợp đồng · hóa đơn · gán tuyến · công nợ',
+    nav: [{ section: 'Nghiệp vụ cán bộ' }, { to: '/', icon: 'home', label: 'Tổng quan', end: true }, { to: '/objects', icon: 'list', label: 'Đối tượng & hợp đồng' }, { to: '/invoices', icon: 'doc', label: 'Hóa đơn / đợt thu' }, { to: '/routes', icon: 'map', label: 'Gán tuyến' }, { to: '/debts', icon: 'percent', label: 'Công nợ' }, { to: '/collect', icon: 'cash', label: 'Thu tiền' }] },
   NTH: { key: 'NTH', code: 'NTH-007', name: 'Trần Văn Tổ', roleLabel: 'Người thu hộ — Tổ trưởng TDP', tag: 'Đi thu tại hộ theo tuyến được phân công',
     nav: [{ section: 'Tác nghiệp' }, { to: '/', icon: 'home', label: 'Trang chủ', end: true }, { to: '/collect-list', icon: 'list', label: 'Danh sách đi thu', badge: 'remaining' }, { to: '/cashbag', icon: 'cash', label: 'Túi tiền — chờ nộp', badge: 'cash' }, { to: '/receipts', icon: 'receipt', label: 'Biên lai' }] },
   KT: { key: 'KT', code: 'KT-003', name: 'Trần Thị Toán', roleLabel: 'Kế toán — Phòng Kinh tế', tag: 'Khớp sao kê · dòng treo · đối soát · báo cáo',
@@ -279,7 +281,7 @@ export const ROLES = {
 }
 export const ROLE_ORDER = ['QT', 'CB', 'NTH', 'KT', 'LD']
 
-export const areaName = (id) => AREAS.find((a) => a.id === id)?.name || id
+export const areaName = (id) => id === 'all' ? AREA_ALL.name : (AREAS.find((a) => a.id === id)?.name || id)
 export const fmt = (n) => (n ?? 0).toLocaleString('vi-VN') + ' đ'
 
 export const PAID_STATUSES = ['paid_qr', 'paid_transfer']

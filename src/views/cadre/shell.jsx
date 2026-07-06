@@ -1,9 +1,10 @@
 import React from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
 import './cadre.css'
 
 /* =========================================================================
-   Khung dùng chung cho vai CÁN BỘ XÃ (mọi màn /cadre/*)
+   Thành phần dùng chung cho vai CÁN BỘ XÃ.
+   Vai này đã được gấp vào Layout chung (mount tại ROOT trong App.jsx);
+   file này chỉ còn giữ các tiện ích UI: Icon, Topbar, Modal, FilterChip, AreaFilter.
    ========================================================================= */
 
 /* Cờ cấu hình quyền phát hành đợt.
@@ -12,15 +13,10 @@ export const CB_CONFIG = { requireLeaderApproval: false }
 export const publishLabel = () =>
   CB_CONFIG.requireLeaderApproval ? 'Trình lãnh đạo duyệt phát hành' : 'Phát hành đợt'
 
-/* ---- Nguồn địa bàn dùng chung cho mọi màn cán bộ (lưu theo MÃ) ----
-   3 xã sáp nhập; giá trị lưu = id (TTT/NB/DT), không hardcode ở component. */
-export const AREAS = [
-  { id: 'TTT', name: 'Thới Tam Thôn (cũ)' },
-  { id: 'NB', name: 'Nhị Bình (cũ)' },
-  { id: 'DT', name: 'Đông Thạnh (cũ)' },
-]
-export const AREA_ALL = { id: 'all', name: 'Tất cả địa bàn' }
-export const areaName = (id) => id === 'all' ? AREA_ALL.name : (AREAS.find((a) => a.id === id)?.name || id)
+/* ---- Nguồn địa bàn: hợp nhất về một nơi (src/data.js) ----
+   Import để AreaFilter dùng, đồng thời re-export để các màn cadre (Objects.jsx…) không phải sửa import. */
+import { AREAS, AREA_ALL, areaName } from '../../data'
+export { AREAS, AREA_ALL, areaName }
 
 /* --- Bộ icon nét mảnh --- */
 const P = {
@@ -53,51 +49,6 @@ export function Icon({ name, size = 18 }) {
       stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d={P[name] || ''} />
     </svg>
-  )
-}
-
-const NAV = [
-  { to: '/cadre', icon: 'overview', label: 'Tổng quan', end: true },
-  { to: '/cadre/objects', icon: 'contract', label: 'Đối tượng & hợp đồng' },
-  { to: '/cadre/invoices', icon: 'invoice', label: 'Hóa đơn / đợt thu' },
-  { to: '/cadre/routes', icon: 'route', label: 'Gán tuyến' },
-  { to: '/cadre/debts', icon: 'debt', label: 'Công nợ' },
-  { to: '/cadre/collect', icon: 'cash', label: 'Thu tiền' },
-]
-
-/* Khung: sidebar + vùng nội dung (Outlet cho từng màn) */
-export function CadreShell() {
-  return (
-    <div className="cb">
-      <aside className="cb-side">
-        <div className="cb-brand">
-          <div className="cb-logo">ĐT</div>
-          <div className="cb-brand-t">
-            <div className="t1">Thu giá DVMT</div>
-            <div className="t2">Xã Đông Thạnh</div>
-          </div>
-        </div>
-        <nav className="cb-nav">
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}
-              className={({ isActive }) => `cb-nav-item${isActive ? ' active' : ''}`}>
-              <Icon name={n.icon} size={17} />
-              <span>{n.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <div className="cb-user">
-          <div className="cb-avatar">M</div>
-          <div className="cb-user-t">
-            <div className="u1">Nguyễn Văn Minh</div>
-            <div className="u2">Cán bộ xã</div>
-          </div>
-        </div>
-      </aside>
-      <main className="cb-main">
-        <Outlet />
-      </main>
-    </div>
   )
 }
 
@@ -137,13 +88,14 @@ export function AreaFilter({ value, onChange }) {
   )
 }
 
-/* Thanh trên dùng chung: title + (search/extra) + 2 filter chuẩn + actions
-   - period=false để ẩn 2 filter chuẩn khi màn có filter riêng
+/* Thanh công cụ dùng chung: (search/extra) + 2 filter chuẩn + actions.
+   Tiêu đề trang đã do header của Layout chung hiển thị → không render .cb-title nữa.
+   - title vẫn nhận (để tương thích) nhưng không dùng.
+   - period=false để ẩn 2 filter chuẩn khi màn có filter riêng.
 */
 export function Topbar({ title, search, extraFilters, actions, period = true }) {
   return (
     <header className="cb-top">
-      <h1 className="cb-title">{title}</h1>
       {search}
       <div className="cb-spacer" />
       <div className="cb-filters">
