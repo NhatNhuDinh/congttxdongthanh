@@ -94,6 +94,8 @@ export function AreaFilter({ value, onChange }) {
    - period=false để ẩn 2 filter chuẩn khi màn có filter riêng.
 */
 export function Topbar({ title, search, extraFilters, actions, period = true }) {
+  // Không còn gì để hiển thị (màn chi tiết chỉ truyền title + period=false) → khỏi render thanh rỗng.
+  if (!search && !extraFilters && !actions && !period) return null
   return (
     <header className="cb-top">
       {search}
