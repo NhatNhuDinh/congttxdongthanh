@@ -1,6 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon, Topbar, publishLabel } from './shell'
+import { useStore } from '../../store'
+import { BATCH } from './Invoices'
 
 const STATS = [
   { k: 'Đối tượng', v: '15.240', sub: 'hộ · KD · cơ quan', link: 'Quản lý', to: '/objects' },
@@ -24,14 +26,23 @@ const ROUTES = [
 
 export default function Overview() {
   const nav = useNavigate()
+  const { toast } = useStore()
   const minPct = Math.min(...ROUTES.map((r) => r.pct))
+
+  // Sinh đợt hóa đơn: sinh hàng loạt ngay (không modal) → đợt về NHÁP → toast → sang /invoices
+  const generate = () => {
+    BATCH.published = false
+    toast('Sinh hóa đơn hàng loạt thành công · 15.240 hóa đơn kỳ T7/2026', 'success')
+    nav('/invoices')
+  }
+
   return (
     <>
       <Topbar
         title="Tổng quan"
         actions={<>
-          <button className="cb-btn ghost"><Icon name="invoice" size={16} />Sinh đợt hóa đơn</button>
-          <button className="cb-btn primary"><Icon name="add" size={16} />{publishLabel()}</button>
+          <button className="cb-btn primary" onClick={generate}><Icon name="invoice" size={16} />Sinh đợt hóa đơn</button>
+          <button className="cb-btn ghost" onClick={() => nav('/invoices')}><Icon name="eye" size={16} />Xem đợt hóa đơn</button>
         </>}
       />
 
@@ -61,8 +72,8 @@ export default function Overview() {
               <p className="cb-line">Đã sinh <b>15.240</b> khoản từ hợp đồng · đúng biểu giá · đã auto-check</p>
               <p className="cb-note">Cấu hình: cán bộ tự phát hành đợt (có log). Bước lãnh đạo duyệt đang tắt.</p>
               <div className="cb-card-actions">
-                <button className="cb-btn ghost" onClick={() => nav('/invoices')}><Icon name="invoice" size={15} />Xem danh sách hóa đơn</button>
-                <button className="cb-btn warn" onClick={() => nav('/invoices')}><span className="cb-numbadge">2</span>Xử lý lỗi auto-check</button>
+                <button className="cb-btn primary" onClick={generate}><Icon name="invoice" size={15} />Sinh đợt hóa đơn</button>
+                <button className="cb-btn ghost" onClick={() => nav('/invoices')}><Icon name="eye" size={15} />Xem danh sách hóa đơn</button>
                 <button className="cb-btn ghost" onClick={() => nav('/debts')}><Icon name="bell" size={15} />Nhắc nợ hàng loạt</button>
               </div>
             </section>

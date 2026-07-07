@@ -267,7 +267,10 @@ export function CadreObjectDetail() {
             </section>
 
             <section className="cb-card pad0">
-              <div style={{ padding: '16px 18px 8px' }}><h2 style={{ fontSize: '14.5px' }}>Lịch sử thu</h2></div>
+              <div className="cb-card-head" style={{ padding: '16px 18px 8px' }}>
+                <h2 style={{ fontSize: '14.5px' }}>Lịch sử thu</h2>
+                <button className="cb-arrow" onClick={() => nav(`/invoices/${o.id}`)}>Xem hóa đơn kỳ T7/2026 ›</button>
+              </div>
               <div className="cb-table-wrap">
                 <table className="cb-table">
                   <thead><tr><th>Kỳ</th><th>Nội dung</th><th className="num">Số tiền</th><th>Trạng thái</th></tr></thead>

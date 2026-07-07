@@ -6,7 +6,7 @@ import Login from './views/Login'
 // ---- Vai CÁN BỘ XÃ (6 màn — mount trong Layout chung tại ROOT) ----
 import CadreOverview2 from './views/cadre/Overview'
 import { CadreObjects, CadreObjectDetail } from './views/cadre/Objects'
-import CadreInvoices2 from './views/cadre/Invoices'
+import CadreInvoices2, { CadreInvoiceDetail } from './views/cadre/Invoices'
 import CadreRoutesView from './views/cadre/RoutesView'
 import CadreDebts2 from './views/cadre/Debts'
 import { CadreCollect, CadreCollectDetail } from './views/cadre/Collect'
@@ -28,7 +28,7 @@ const NTH_ROUTES = [
 ]
 const DESKTOP_ROUTES = {
   QT: [['/', <AdminOverview />], ['/users', <AdminUsers />], ['/areas', <AdminAreas />], ['/pricing', <AdminPricing />], ['/integrations', <AdminIntegrations />], ['/audit', <AdminAudit />]],
-  CB: [['/', <CadreOverview2 />], ['/objects', <CadreObjects />], ['/objects/:id', <CadreObjectDetail />], ['/invoices', <CadreInvoices2 />], ['/routes', <CadreRoutesView />], ['/debts', <CadreDebts2 />], ['/collect', <CadreCollect />], ['/collect/:id', <CadreCollectDetail />]],
+  CB: [['/', <CadreOverview2 />], ['/objects', <CadreObjects />], ['/objects/:id', <CadreObjectDetail />], ['/invoices', <CadreInvoices2 />], ['/invoices/:id', <CadreInvoiceDetail />], ['/routes', <CadreRoutesView />], ['/debts', <CadreDebts2 />], ['/collect', <CadreCollect />], ['/collect/:id', <CadreCollectDetail />]],
   KT: [['/', <AcctOverview />], ['/reconcile', <AcctReconcile />], ['/suspense', <AcctSuspense />], ['/cash-reconcile', <AcctCashReconcile />], ['/ledger', <AcctLedger />], ['/reports', <AcctReports />]],
   LD: [['/', <LeaderDashboard />], ['/assignments', <LeaderAssignments />], ['/approvals', <LeaderApprovals />], ['/batches', <LeaderBatches />], ['/reports', <LeaderReports />]],
 }
